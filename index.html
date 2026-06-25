@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学校の課題管理アプリ</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 10px; background: #f5f5f5; }
+        .card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        input, select, button { width: 100%; padding: 8px; margin: 5px 0 15px 0; box-sizing: border-box; }
+        button { background: #8a4fff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border-bottom: 1px solid #ddd; padding: 8px; text-align: left; }
+        .badge { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; }
+    </style>
+</head>
+<body>
+
+    <h1>📝 課題管理システム</h1>
+
+    <div class="card">
+        <h3>新しい課題の登録</h3>
+        <label>課題タイトル:</label>
+        <input type="text" id="taskTitle" placeholder="例：プログラミング演習レポート">
+        
+        <label>提出期限:</label>
+        <input type="datetime-local" id="taskDueDate">
+        
+        <button onclick="addTask()">課題を登録する</button>
+    </div>
+
+    <div class="card">
+        <h3>課題一覧</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>タイトル</th>
+                    <th>期限</th>
+                    <th>採点結果</th>
+                </tr>
+            </thead>
+            <tbody id="taskTableBody">
+                </tbody>
+        </table>
+    </div>
+
+    <script>
+        // アプリ起動時にLocalStorageからデータを読み込む（共通機能要求：読込）
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+        function displayTasks() {
+            const tbody = document.getElementById('taskTableBody');
+            tbody.innerHTML = '';
+            
+            tasks.forEach((task, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${task.title}</strong></td>
+                    <td><span class="badge">${task.dueDate.replace('T', ' ')}</span></td>
+                    <td>
+                        <input type="number" placeholder="点数" value="${task.score || ''}" 
+                               style="width:60px; margin:0;" onchange="updateScore(${index}, this.value)"> 点
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 課題の追加機能（コア機能要求：登録）
+        function addTask() {
+            const title = document.getElementById('taskTitle').value;
+            const dueDate = document.getElementById('taskDueDate').value;
+            
+            if (!title || !dueDate) return alert('入力してください！');
+
+            tasks.push({ title: title, dueDate: dueDate, score: null });
+            saveAndRefresh();
+            
+            document.getElementById('taskTitle').value = '';
+            document.getElementById('taskDueDate').value = '';
+        }
+
+        // 採点結果の記録機能（コア機能要求：採点）
+        function updateScore(index, score) {
+            tasks[index].score = score;
+            saveAndRefresh();
+        }
+
+        // データをLocalStorageに保存して画面を更新（共通機能要求：保存）
+        function saveAndRefresh() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            displayTasks();
+        }
+
+        // 初回表示
+        displayTasks();
+    </script>
+</body>
+</html>
