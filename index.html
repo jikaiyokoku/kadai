@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>学校の課題・時間割・GPA管理アプリ</title>
     <style>
-        body { font-family: sans-serif; max-width: 750px; margin: 20px auto; padding: 10px; background: #f5f5f5; color: #333; }
+        body { font-family: sans-serif; max-width: 800px; margin: 20px auto; padding: 10px; background: #f5f5f5; color: #333; }
         .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        h1 { color: #8a4fff; text-align: center; }
+        h1 { color: #8a4fff; text-align: center; margin-bottom: 5px; }
         h2 { border-left: 5px solid #8a4fff; padding-left: 10px; font-size: 1.4em; margin-top: 0; }
         label { font-weight: bold; display: block; margin-top: 10px; }
         input, select, button { width: 100%; padding: 10px; margin: 8px 0 16px 0; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; }
@@ -16,11 +16,15 @@
         .btn-danger { background: #ff4d4d; margin: 0; padding: 4px 8px; font-size: 0.85em; width: auto; display: inline-block; }
         .btn-danger:hover { background: #e60000; }
         
-        /* 1. アラートエリアのスタイル */
+        /* ⏰ 時計エリアのスタイル */
+        .clock-box { text-align: center; font-size: 1.2em; font-weight: bold; color: #555; background: #eef2ff; padding: 10px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e0e7ff; }
+        #liveClock { font-size: 1.4em; color: #4f46e5; display: block; margin-top: 5px; }
+
+        /* 📢 アラートエリアのスタイル */
         .alert-box { background: #ffe6e6; border-left: 5px solid #ff4d4d; color: #cc0000; padding: 15px; margin-bottom: 20px; border-radius: 8px; font-weight: bold; display: none; }
         .alert-item { margin: 5px 0; font-size: 0.95em; }
 
-        /* 2. 成績・GPAダッシュボード */
+        /* 📊 成績・GPAダッシュボード */
         .stats-grid { display: flex; gap: 20px; margin-bottom: 15px; }
         .stat-card { flex: 1; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 8px; text-align: center; }
         .stat-card.gpa { background: #eff6ff; border: 1px solid #bfdbfe; }
@@ -29,10 +33,11 @@
 
         /* テーブルスタイル */
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 10px 6px; text-align: center; font-size: 0.9em; }
+        th, td { border: 1px solid #ddd; padding: 10px 4px; text-align: center; font-size: 0.85em; }
         th { background: #8a4fff; color: white; }
+        th.sat-header { background: #2563eb; } /* 土曜日のヘッダーを青に */
         
-        .task-table th, .task-table td { text-align: left; border: none; border-bottom: 1px solid #eee; }
+        .task-table th, .task-table td { text-align: left; border: none; border-bottom: 1px solid #eee; padding: 10px 6px; }
         .task-table th { background: #f9f9f9; color: #666; }
         .badge { background: #eef2ff; color: #4f46e5; padding: 4px 8px; border-radius: 6px; font-size: 0.85em; font-weight: bold; }
         .badge.urgent { background: #ffe6e6; color: #ff4d4d; }
@@ -43,12 +48,17 @@
         .slot-info { font-size: 0.75em; color: #666; margin-top: 3px; }
         
         .flex-inputs { display: flex; gap: 8px; flex-wrap: wrap; }
-        .flex-inputs div { flex: 1; min-width: 120px; }
+        .flex-inputs div { flex: 1; min-width: 110px; }
     </style>
 </head>
 <body>
 
     <h1>📝 履修・時間割＆課題管理システム</h1>
+
+    <div class="clock-box">
+        📅 現在の日時
+        <span id="liveClock">読み込み中...</span>
+    </div>
 
     <div id="alertArea" class="alert-box">
         ⚠️ 提出期限が間近（2日以内）の課題があります！
@@ -74,24 +84,25 @@
         <table class="timetable-table">
             <thead>
                 <tr>
-                    <th style="width: 10%;">限</th>
-                    <th>月</th>
-                    <th>火</th>
-                    <th>水</th>
-                    <th>木</th>
-                    <th>金</th>
+                    <th style="width: 8%;">限</th>
+                    <th style="width: 15%;">月</th>
+                    <th style="width: 15%;">火</th>
+                    <th style="width: 15%;">水</th>
+                    <th style="width: 15%;">木</th>
+                    <th style="width: 15%;">金</th>
+                    <th style="width: 15%;" class="sat-header">土</th>
                 </tr>
             </thead>
             <tbody>
                 <script>
-                    const days = ['月', '火', '水', '木', '金'];
-                    for (let period = 1; period <= 5; period++) {
-                        document.write(`<tr>`);
-                        document.write(`<td><strong>${period}</strong></td>`);
-                        days.forEach(day => {
-                            document.write(`<td id="cell-${day}-${period}">-</td>`);
+                    const daysListInit = ['月', '火', '水', '木', '金', '土'];
+                    for (let period = 1; period <= 6; period++) {
+                        document.write('<tr>');
+                        document.write('<td><strong>' + period + '</strong></td>');
+                        daysListInit.forEach(function(day) {
+                            document.write('<td id="cell-' + day + '-' + period + '">-</td>');
                         });
-                        document.write(`</tr>`);
+                        document.write('</tr>');
                     }
                 </script>
             </tbody>
@@ -107,6 +118,7 @@
                     <option value="水">水曜日</option>
                     <option value="木">木曜日</option>
                     <option value="金">金曜日</option>
+                    <option value="土">土曜日</option>
                 </select>
             </div>
             <div>
@@ -117,11 +129,12 @@
                     <option value="3">3限</option>
                     <option value="4">4限</option>
                     <option value="5">5限</option>
+                    <option value="6">6限</option>
                 </select>
             </div>
             <div style="flex: 2; min-width: 180px;">
                 <label>科目名 (空欄で削除)</label>
-                <input type="text" id="ttSubject" placeholder="例：プログラミングI">
+                <input type="text" id="ttSubject" placeholder="例：土曜集中講義">
             </div>
             <div>
                 <label>単位数</label>
@@ -177,10 +190,28 @@
         let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
         let timetable = JSON.parse(localStorage.getItem('timetable')) || {};
 
-        // GPAの評点変換マップ
         const gradePoints = { '秀': 4, '優': 3, '良': 2, '可': 1, '不可': 0 };
 
-        // 📢 1. 期限直前アラートのチェック
+        // ⏰ 今日の一時・現在時刻を更新する関数
+        function updateClock() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            const date = now.getDate();
+            const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][now.getDay()];
+            
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+
+            const clockText = year + '年' + month + '月' + date + '日 (' + dayOfWeek + ') ' + hours + ':' + minutes + ':' + seconds;
+            document.getElementById('liveClock').innerText = clockText;
+        }
+        // 1秒ごとに時計を動かす
+        setInterval(updateClock, 1000);
+        updateClock(); // 初回実行
+
+        // 📢 期限直前アラートのチェック
         function checkAlerts() {
             const alertArea = document.getElementById('alertArea');
             const alertList = document.getElementById('alertList');
@@ -189,7 +220,7 @@
             const now = new Date();
             let hasUrgentTask = false;
 
-            tasks.forEach(task => {
+            tasks.forEach(function(task) {
                 const dueDate = new Date(task.dueDate);
                 const timeDiff = dueDate - now;
                 const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
@@ -198,7 +229,7 @@
                     hasUrgentTask = true;
                     const item = document.createElement('div');
                     item.className = 'alert-item';
-                    item.innerHTML = `⏰ <strong>${task.title}</strong> （期限: ${task.dueDate.replace('T', ' ')} まであと ${Math.ceil(daysDiff * 24)} 時間！）`;
+                    item.innerHTML = '⏰ <strong>' + task.title + '</strong> （期限: ' + task.dueDate.replace('T', ' ') + ' まであと ' + Math.ceil(daysDiff * 24) + ' 時間！）';
                     alertList.appendChild(item);
                 }
             });
@@ -206,13 +237,14 @@
             alertArea.style.display = hasUrgentTask ? 'block' : 'none';
         }
 
-        // 📊 2. GPA・単位数の計算
+        // 📊 GPA・単位数の計算
         function calculateGPA() {
             let totalCredits = 0;
             let earnedCredits = 0;
             let totalPoints = 0;
 
-            Object.values(timetable).forEach(slot => {
+            Object.keys(timetable).forEach(function(key) {
+                const slot = timetable[key];
                 const credits = parseInt(slot.credits, 10);
                 if (slot.grade !== '未') {
                     totalCredits += credits;
@@ -229,20 +261,17 @@
             document.getElementById('gpaValue').innerText = gpa;
         }
 
-        // 時間割の表示
+        // 時間割の表示（土曜・6限対応）
         function displayTimetable() {
-            const daysList = ['月', '火', '水', '木', '金'];
-            for (let period = 1; period <= 5; period++) {
-                daysList.forEach(day => {
-                    const cellId = `cell-${day}-${period}`;
+            const daysList = ['月', '火', '水', '木', '金', '土'];
+            for (let period = 1; period <= 6; period++) {
+                daysList.forEach(function(day) {
+                    const cellId = 'cell-' + day + '-' + period;
                     const cell = document.getElementById(cellId);
-                    const slot = timetable[`${day}-${period}`];
+                    const slot = timetable[day + '-' + period];
                     
                     if (slot) {
-                        cell.innerHTML = `
-                            <div class="slot-name">${slot.subject}</div>
-                            <div class="slot-info">${slot.credits}単位 / 評価:${slot.grade}</div>
-                        `;
+                        cell.innerHTML = '<div class="slot-name">' + slot.subject + '</div><div class="slot-info">' + slot.credits + '単位 / 評価:' + slot.grade + '</div>';
                         cell.style.background = slot.grade === '不可' ? '#fee2e2' : '#eef2ff';
                     } else {
                         cell.innerHTML = "-";
@@ -259,12 +288,12 @@
             const subject = document.getElementById('ttSubject').value.trim();
             const credits = document.getElementById('ttCredits').value;
             const grade = document.getElementById('ttGrade').value;
-            const key = `${day}-${period}`;
+            const key = day + '-' + period;
 
             if (subject === "") {
                 delete timetable[key];
             } else {
-                timetable[key] = { subject, credits, grade };
+                timetable[key] = { subject: subject, credits: credits, grade: grade };
             }
 
             localStorage.setItem('timetable', JSON.stringify(timetable));
@@ -285,23 +314,15 @@
             
             const now = new Date();
 
-            tasks.forEach((task, index) => {
+            tasks.forEach(function(task, index) {
                 const tr = document.createElement('tr');
                 const dueDate = new Date(task.dueDate);
                 const isUrgent = (dueDate - now) / (1000 * 60 * 60 * 24) <= 2 && (dueDate - now) >= 0;
                 
-                tr.innerHTML = `
-                    <td><strong>${task.title}</strong></td>
-                    <td><span class="badge ${isUrgent ? 'urgent' : ''}">${task.dueDate.replace('T', ' ')}</span></td>
-                    <td>
-                        <input type="number" class="score-input" placeholder="未" min="0" max="100"
-                               value="${task.score !== null ? task.score : ''}" 
-                               onchange="updateScore(${index}, this.value)"> 点
-                    </td>
-                    <td>
-                        <button class="btn-danger" onclick="deleteTask(${index})">削除</button>
-                    </td>
-                `;
+                tr.innerHTML = '<td><strong>' + task.title + '</strong></td>' +
+                    '<td><span class="badge ' + (isUrgent ? 'urgent' : '') + '">' + task.dueDate.replace('T', ' ') + '</span></td>' +
+                    '<td><input type="number" class="score-input" placeholder="未" min="0" max="100" value="' + (task.score !== null ? task.score : '') + '" onchange="updateScore(' + index + ', this.value)"> 点</td>' +
+                    '<td><button class="btn-danger" onclick="deleteTask(' + index + ')">削除</button></td>';
                 tbody.appendChild(tr);
             });
 
@@ -320,7 +341,7 @@
         }
 
         function deleteTask(index) {
-            if (confirm(`「${tasks[index].title}」を削除しますか？`)) {
+            if (confirm('「' + tasks[index].title + '」を削除しますか？')) {
                 tasks.splice(index, 1);
                 saveAndRefresh();
             }
@@ -336,7 +357,6 @@
             displayTasks();
         }
 
-        // 初期実行
         displayTimetable();
         displayTasks();
     </script>
