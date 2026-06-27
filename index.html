@@ -177,7 +177,7 @@
         let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
         let timetable = JSON.parse(localStorage.getItem('timetable')) || {};
 
-        // 🌟 GPAの評点変換マップ
+        // GPAの評点変換マップ
         const gradePoints = { '秀': 4, '優': 3, '良': 2, '可': 1, '不可': 0 };
 
         // 📢 1. 期限直前アラートのチェック
@@ -192,9 +192,8 @@
             tasks.forEach(task => {
                 const dueDate = new Date(task.dueDate);
                 const timeDiff = dueDate - now;
-                const daysDiff = timeDiff / (1000 * 60 * 60 * 24); // 残り日数に変換
+                const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
 
-                // 期限まで2日以内の未提出（または未採点）の課題をピックアップ
                 if (daysDiff >= 0 && daysDiff <= 2) {
                     hasUrgentTask = true;
                     const item = document.createElement('div');
@@ -218,7 +217,7 @@
                 if (slot.grade !== '未') {
                     totalCredits += credits;
                     if (slot.grade !== '不可') {
-                        earnedCredits += credits; // 不可でなければ取得単位になる
+                        earnedCredits += credits;
                     }
                     totalPoints += gradePoints[slot.grade] * credits;
                 }
