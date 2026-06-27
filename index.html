@@ -3,40 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>学校の課題管理アプリ</title>
+    <title>学校の課題・時間割管理アプリ</title>
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 10px; background: #f5f5f5; }
-        .card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        input, select, button { width: 100%; padding: 8px; margin: 5px 0 15px 0; box-sizing: border-box; }
-        button { background: #8a4fff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border-bottom: 1px solid #ddd; padding: 8px; text-align: left; }
-        .badge { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; }
+        body { font-family: sans-serif; max-width: 700px; margin: 20px auto; padding: 10px; background: #f5f5f5; color: #333; }
+        .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h1 { color: #8a4fff; text-align: center; }
+        h2 { border-left: 5px solid #8a4fff; padding-left: 10px; font-size: 1.4em; margin-top: 0; }
+        label { font-weight: bold; display: block; margin-top: 10px; }
+        input, select, button { width: 100%; padding: 10px; margin: 8px 0 16px 0; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; }
+        button { background: #8a4fff; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 1em; }
+        button:hover { background: #713cd6; }
+        .btn-danger { background: #ff4d4d; margin: 0; padding: 4px 8px; font-size: 0.85em; width: auto; display: inline-block; }
+        .btn-danger:hover { background: #e60000; }
+        
+        /* テーブル共通 */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 12px 8px; text-align: center; }
+        th { background: #f9f9f9; color: #666; }
+        
+        /* 課題用スタイルの調整 */
+        .task-table th, .task-table td { text-align: left; border: none; border-bottom: 1px solid #eee; }
+        .badge { background: #eef2ff; color: #4f46e5; padding: 4px 8px; border-radius: 6px; font-size: 0.85em; font-weight: bold; }
+        .score-input { width: 60px; padding: 6px; margin: 0; text-align: center; }
+        
+        /* 時間割用のスタイル */
+        .timetable-table th { background: #8a4fff; color: white; }
+        .timetable-table td { height: 50px; font-size: 0.9em; font-weight: bold; background: #fafafa; }
+        .flex-inputs { display: flex; gap: 10px; }
+        .flex-inputs div { flex: 1; }
     </style>
 </head>
 <body>
 
-    <h1>📝 課題管理システム</h1>
+    <h1>📝 課題＆時間割管理システム</h1>
 
     <div class="card">
-        <h3>新しい課題の登録</h3>
-        <label>課題タイトル:</label>
-        <input type="text" id="taskTitle" placeholder="例：プログラミング演習レポート">
+        <h2>📅 時間割表</h2>
+        <table class="timetable-table">
+            <thead>
+                <tr>
+                    <th style="width: 10%;">限</th>
+                    <th style="width: 18%;">月</th>
+                    <th style="width: 18%;">火</th>
+                    <th style="width: 18%;">水</th>
+                    <th style="width: 18%;">木</th>
+                    <th style="width: 18%;">金</th>
+                </tr>
+            </thead>
+            <tbody>
+                <script>
+                    const days = ['月', '火', '水', '木', '金'];
+                    for (let period = 1; period <= 5; period++) {
+                        document.write(`<tr>`);
+                        document.write(`<td><strong>${period}</strong></td>`);
+                        days.forEach(day => {
+                            document.write(`<td id="cell-${day}-${period}">-</td>`);
+                        });
+                        document.write(`</tr>`);
+                    }
+                </script>
+            </tbody>
+        </table>
+
+        <h3 style="margin-top: 20px; font-size: 1.1em;">時間割の登録・変更</h3>
+        <div class="flex-inputs">
+            <div>
+                <label>曜日</label>
+                <select id="ttDay">
+                    <option value="月">月曜日</option>
+                    <option value="火">火曜日</option>
+                    <option value="水">水曜日</option>
+                    <option value="木">木曜日</option>
+                    <option value="金">金曜日</option>
+                </select>
+            </div>
+            <div>
+                <label>時限</label>
+                <select id="ttPeriod">
+                    <option value="1">1限</option>
+                    <option value="2">2限</option>
+                    <option value="3">3限</option>
+                    <option value="4">4限</option>
+                    <option value="5">5限</option>
+                </select>
+            </div>
+            <div style="flex: 2;">
+                <label>科目名 (空欄で削除)</label>
+                <input type="text" id="ttSubject" placeholder="例：英語I">
+            </div>
+        </div>
+        <button onclick="saveTimetableSlot()">時間割を更新する</button>
+    </div>
+
+    <div class="card">
+        <h2>新しい課題の登録</h2>
+        <label>課題タイトル</label>
+        <input type="text" id="taskTitle" placeholder="例：世界史のレポート提出">
         
-        <label>提出期限:</label>
+        <label>提出期限</label>
         <input type="datetime-local" id="taskDueDate">
         
         <button onclick="addTask()">課題を登録する</button>
     </div>
 
     <div class="card">
-        <h3>課題一覧</h3>
-        <table>
+        <h2>課題一覧</h2>
+        <table class="task-table">
             <thead>
                 <tr>
                     <th>タイトル</th>
                     <th>期限</th>
                     <th>採点結果</th>
+                    <th>操作</th>
                 </tr>
             </thead>
             <tbody id="taskTableBody">
@@ -45,33 +123,87 @@
     </div>
 
     <script>
-        // アプリ起動時にLocalStorageからデータを読み込む（共通機能要求：読込）
+        // ==================== 共通・データ管理ロジック ====================
         let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        let timetable = JSON.parse(localStorage.getItem('timetable')) || {};
 
+        // ==================== 時間割の処理 ====================
+        function displayTimetable() {
+            const daysList = ['月', '火', '水', '木', '金'];
+            for (let period = 1; period <= 5; period++) {
+                daysList.forEach(day => {
+                    const cellId = `cell-${day}-${period}`;
+                    const cell = document.getElementById(cellId);
+                    const savedSubject = timetable[`${day}-${period}`];
+                    
+                    if (savedSubject) {
+                        cell.innerText = savedSubject;
+                        cell.style.background = "#eef2ff"; // 科目があるマスは色を変える
+                        cell.style.color = "#4f46e5";
+                    } else {
+                        cell.innerText = "-";
+                        cell.style.background = "#fafafa";
+                        cell.style.color = "#333";
+                    }
+                });
+            }
+        }
+
+        function saveTimetableSlot() {
+            const day = document.getElementById('ttDay').value;
+            const period = document.getElementById('ttPeriod').value;
+            const subject = document.getElementById('ttSubject').value.trim();
+            const key = `${day}-${period}`;
+
+            if (subject === "") {
+                delete timetable[key]; // 空欄ならそのマスの科目を削除
+            } else {
+                timetable[key] = subject; // 科目を登録
+            }
+
+            localStorage.setItem('timetable', JSON.stringify(timetable));
+            displayTimetable();
+            document.getElementById('ttSubject').value = ""; // 入力欄をクリア
+        }
+
+        // ==================== 課題の処理 ====================
         function displayTasks() {
             const tbody = document.getElementById('taskTableBody');
             tbody.innerHTML = '';
             
+            if (tasks.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999; border:none; padding:20px 0;">登録された課題はありません</td></tr>';
+                return;
+            }
+            
             tasks.forEach((task, index) => {
                 const tr = document.createElement('tr');
+                const formattedDate = task.dueDate.replace('T', ' ');
+                
                 tr.innerHTML = `
                     <td><strong>${task.title}</strong></td>
-                    <td><span class="badge">${task.dueDate.replace('T', ' ')}</span></td>
+                    <td><span class="badge">${formattedDate}</span></td>
                     <td>
-                        <input type="number" placeholder="点数" value="${task.score || ''}" 
-                               style="width:60px; margin:0;" onchange="updateScore(${index}, this.value)"> 点
+                        <input type="number" class="score-input" placeholder="未" min="0" max="100"
+                               value="${task.score !== null ? task.score : ''}" 
+                               onchange="updateScore(${index}, this.value)"> 点
+                    </td>
+                    <td>
+                        <button class="btn-danger" onclick="deleteTask(${index})">削除</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        // 課題の追加機能（コア機能要求：登録）
         function addTask() {
             const title = document.getElementById('taskTitle').value;
             const dueDate = document.getElementById('taskDueDate').value;
             
-            if (!title || !dueDate) return alert('入力してください！');
+            if (!title || !dueDate) {
+                alert('タイトルと期限を両方入力してください！');
+                return;
+            }
 
             tasks.push({ title: title, dueDate: dueDate, score: null });
             saveAndRefresh();
@@ -80,19 +212,26 @@
             document.getElementById('taskDueDate').value = '';
         }
 
-        // 採点結果の記録機能（コア機能要求：採点）
+        // 【追加機能】課題の削除
+        function deleteTask(index) {
+            if (confirm(`「${tasks[index].title}」を削除しますか？`)) {
+                tasks.splice(index, 1); // 指定した位置の課題を1件削除
+                saveAndRefresh();
+            }
+        }
+
         function updateScore(index, score) {
-            tasks[index].score = score;
+            tasks[index].score = score !== '' ? parseInt(score, 10) : null;
             saveAndRefresh();
         }
 
-        // データをLocalStorageに保存して画面を更新（共通機能要求：保存）
         function saveAndRefresh() {
             localStorage.setItem('tasks', JSON.stringify(tasks));
             displayTasks();
         }
 
-        // 初回表示
+        // ページ読み込み時の初期表示
+        displayTimetable();
         displayTasks();
     </script>
 </body>
