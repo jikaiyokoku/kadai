@@ -192,7 +192,7 @@
 
         const gradePoints = { '秀': 4, '優': 3, '良': 2, '可': 1, '不可': 0 };
 
-        // ⏰ 今日の一時・現在時刻を更新する関数
+        // ⏰ 時計の更新
         function updateClock() {
             const now = new Date();
             const year = now.getFullYear();
@@ -207,11 +207,10 @@
             const clockText = year + '年' + month + '月' + date + '日 (' + dayOfWeek + ') ' + hours + ':' + minutes + ':' + seconds;
             document.getElementById('liveClock').innerText = clockText;
         }
-        // 1秒ごとに時計を動かす
         setInterval(updateClock, 1000);
-        updateClock(); // 初回実行
+        updateClock();
 
-        // 📢 期限直前アラートのチェック
+        // 📢 アラートチェック
         function checkAlerts() {
             const alertArea = document.getElementById('alertArea');
             const alertList = document.getElementById('alertList');
@@ -237,7 +236,7 @@
             alertArea.style.display = hasUrgentTask ? 'block' : 'none';
         }
 
-        // 📊 GPA・単位数の計算
+        // 📊 GPA計算
         function calculateGPA() {
             let totalCredits = 0;
             let earnedCredits = 0;
@@ -261,7 +260,7 @@
             document.getElementById('gpaValue').innerText = gpa;
         }
 
-        // 時間割の表示（土曜・6限対応）
+        // 時間割の表示
         function displayTimetable() {
             const daysList = ['月', '火', '水', '木', '金', '土'];
             for (let period = 1; period <= 6; period++) {
