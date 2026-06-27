@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -34,4 +33,313 @@
         th { background: #8a4fff; color: white; }
         
         .task-table th, .task-table td { text-align: left; border: none; border-bottom: 1px solid #eee; }
-        .task-table th { background: #f9f9f
+        .task-table th { background: #f9f9f9; color: #666; }
+        .badge { background: #eef2ff; color: #4f46e5; padding: 4px 8px; border-radius: 6px; font-size: 0.85em; font-weight: bold; }
+        .badge.urgent { background: #ffe6e6; color: #ff4d4d; }
+        .score-input { width: 60px; padding: 6px; margin: 0; text-align: center; }
+        
+        .timetable-table td { height: 65px; background: #fafafa; }
+        .slot-name { font-weight: bold; color: #4f46e5; }
+        .slot-info { font-size: 0.75em; color: #666; margin-top: 3px; }
+        
+        .flex-inputs { display: flex; gap: 8px; flex-wrap: wrap; }
+        .flex-inputs div { flex: 1; min-width: 120px; }
+    </style>
+</head>
+<body>
+
+    <h1>📝 履修・時間割＆課題管理システム</h1>
+
+    <div id="alertArea" class="alert-box">
+        ⚠️ 提出期限が間近（2日以内）の課題があります！
+        <div id="alertList"></div>
+    </div>
+
+    <div class="card">
+        <h2>📊 成績・GPA計算</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div>総取得単位数</div>
+                <div id="totalCredits" class="stat-value">0</div>
+            </div>
+            <div class="stat-card gpa">
+                <div>現在のGPA</div>
+                <div id="gpaValue" class="stat-value">0.00</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📅 時間割表</h2>
+        <table class="timetable-table">
+            <thead>
+                <tr>
+                    <th style="width: 10%;">限</th>
+                    <th>月</th>
+                    <th>火</th>
+                    <th>水</th>
+                    <th>木</th>
+                    <th>金</th>
+                </tr>
+            </thead>
+            <tbody>
+                <script>
+                    const days = ['月', '火', '水', '木', '金'];
+                    for (let period = 1; period <= 5; period++) {
+                        document.write(`<tr>`);
+                        document.write(`<td><strong>${period}</strong></td>`);
+                        days.forEach(day => {
+                            document.write(`<td id="cell-${day}-${period}">-</td>`);
+                        });
+                        document.write(`</tr>`);
+                    }
+                </script>
+            </tbody>
+        </table>
+
+        <h3 style="margin-top: 20px; font-size: 1.1em;">科目の登録・成績入力</h3>
+        <div class="flex-inputs">
+            <div>
+                <label>曜日</label>
+                <select id="ttDay">
+                    <option value="月">月曜日</option>
+                    <option value="火">火曜日</option>
+                    <option value="水">水曜日</option>
+                    <option value="木">木曜日</option>
+                    <option value="金">金曜日</option>
+                </select>
+            </div>
+            <div>
+                <label>時限</label>
+                <select id="ttPeriod">
+                    <option value="1">1限</option>
+                    <option value="2">2限</option>
+                    <option value="3">3限</option>
+                    <option value="4">4限</option>
+                    <option value="5">5限</option>
+                </select>
+            </div>
+            <div style="flex: 2; min-width: 180px;">
+                <label>科目名 (空欄で削除)</label>
+                <input type="text" id="ttSubject" placeholder="例：プログラミングI">
+            </div>
+            <div>
+                <label>単位数</label>
+                <select id="ttCredits">
+                    <option value="2">2単位</option>
+                    <option value="1">1単位</option>
+                    <option value="4">4単位</option>
+                </select>
+            </div>
+            <div>
+                <label>成績評価</label>
+                <select id="ttGrade">
+                    <option value="未">履修中 (未)</option>
+                    <option value="秀">秀 (A+)</option>
+                    <option value="優">優 (A)</option>
+                    <option value="良">良 (B)</option>
+                    <option value="可">可 (C)</option>
+                    <option value="不可">不可 (F)</option>
+                </select>
+            </div>
+        </div>
+        <button onclick="saveTimetableSlot()">時間割・成績を更新する</button>
+    </div>
+
+    <div class="card">
+        <h2>新しい課題の登録</h2>
+        <label>課題タイトル</label>
+        <input type="text" id="taskTitle" placeholder="例：世界史のレポート提出">
+        
+        <label>提出期限</label>
+        <input type="datetime-local" id="taskDueDate">
+        
+        <button onclick="addTask()">課題を登録する</button>
+    </div>
+
+    <div class="card">
+        <h2>課題一覧</h2>
+        <table class="task-table">
+            <thead>
+                <tr>
+                    <th>タイトル</th>
+                    <th>期限</th>
+                    <th>採点結果</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="taskTableBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // データ管理
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        let timetable = JSON.parse(localStorage.getItem('timetable')) || {};
+
+        // 🌟 GPAの評点変換マップ
+        const gradePoints = { '秀': 4, '優': 3, '良': 2, '可': 1, '不可': 0 };
+
+        // 📢 1. 期限直前アラートのチェック
+        function checkAlerts() {
+            const alertArea = document.getElementById('alertArea');
+            const alertList = document.getElementById('alertList');
+            alertList.innerHTML = '';
+            
+            const now = new Date();
+            let hasUrgentTask = false;
+
+            tasks.forEach(task => {
+                const dueDate = new Date(task.dueDate);
+                const timeDiff = dueDate - now;
+                const daysDiff = timeDiff / (1000 * 60 * 60 * 24); // 残り日数に変換
+
+                // 期限まで2日以内の未提出（または未採点）の課題をピックアップ
+                if (daysDiff >= 0 && daysDiff <= 2) {
+                    hasUrgentTask = true;
+                    const item = document.createElement('div');
+                    item.className = 'alert-item';
+                    item.innerHTML = `⏰ <strong>${task.title}</strong> （期限: ${task.dueDate.replace('T', ' ')} まであと ${Math.ceil(daysDiff * 24)} 時間！）`;
+                    alertList.appendChild(item);
+                }
+            });
+
+            alertArea.style.display = hasUrgentTask ? 'block' : 'none';
+        }
+
+        // 📊 2. GPA・単位数の計算
+        function calculateGPA() {
+            let totalCredits = 0;
+            let earnedCredits = 0;
+            let totalPoints = 0;
+
+            Object.values(timetable).forEach(slot => {
+                const credits = parseInt(slot.credits, 10);
+                if (slot.grade !== '未') {
+                    totalCredits += credits;
+                    if (slot.grade !== '不可') {
+                        earnedCredits += credits; // 不可でなければ取得単位になる
+                    }
+                    totalPoints += gradePoints[slot.grade] * credits;
+                }
+            });
+
+            const gpa = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : "0.00";
+            
+            document.getElementById('totalCredits').innerText = earnedCredits;
+            document.getElementById('gpaValue').innerText = gpa;
+        }
+
+        // 時間割の表示
+        function displayTimetable() {
+            const daysList = ['月', '火', '水', '木', '金'];
+            for (let period = 1; period <= 5; period++) {
+                daysList.forEach(day => {
+                    const cellId = `cell-${day}-${period}`;
+                    const cell = document.getElementById(cellId);
+                    const slot = timetable[`${day}-${period}`];
+                    
+                    if (slot) {
+                        cell.innerHTML = `
+                            <div class="slot-name">${slot.subject}</div>
+                            <div class="slot-info">${slot.credits}単位 / 評価:${slot.grade}</div>
+                        `;
+                        cell.style.background = slot.grade === '不可' ? '#fee2e2' : '#eef2ff';
+                    } else {
+                        cell.innerHTML = "-";
+                        cell.style.background = "#fafafa";
+                    }
+                });
+            }
+            calculateGPA();
+        }
+
+        function saveTimetableSlot() {
+            const day = document.getElementById('ttDay').value;
+            const period = document.getElementById('ttPeriod').value;
+            const subject = document.getElementById('ttSubject').value.trim();
+            const credits = document.getElementById('ttCredits').value;
+            const grade = document.getElementById('ttGrade').value;
+            const key = `${day}-${period}`;
+
+            if (subject === "") {
+                delete timetable[key];
+            } else {
+                timetable[key] = { subject, credits, grade };
+            }
+
+            localStorage.setItem('timetable', JSON.stringify(timetable));
+            displayTimetable();
+            document.getElementById('ttSubject').value = "";
+        }
+
+        // 課題の表示
+        function displayTasks() {
+            const tbody = document.getElementById('taskTableBody');
+            tbody.innerHTML = '';
+            
+            if (tasks.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999; border:none; padding:20px 0;">登録された課題はありません</td></tr>';
+                checkAlerts();
+                return;
+            }
+            
+            const now = new Date();
+
+            tasks.forEach((task, index) => {
+                const tr = document.createElement('tr');
+                const dueDate = new Date(task.dueDate);
+                const isUrgent = (dueDate - now) / (1000 * 60 * 60 * 24) <= 2 && (dueDate - now) >= 0;
+                
+                tr.innerHTML = `
+                    <td><strong>${task.title}</strong></td>
+                    <td><span class="badge ${isUrgent ? 'urgent' : ''}">${task.dueDate.replace('T', ' ')}</span></td>
+                    <td>
+                        <input type="number" class="score-input" placeholder="未" min="0" max="100"
+                               value="${task.score !== null ? task.score : ''}" 
+                               onchange="updateScore(${index}, this.value)"> 点
+                    </td>
+                    <td>
+                        <button class="btn-danger" onclick="deleteTask(${index})">削除</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            checkAlerts();
+        }
+
+        function addTask() {
+            const title = document.getElementById('taskTitle').value;
+            const dueDate = document.getElementById('taskDueDate').value;
+            if (!title || !dueDate) return alert('入力してください！');
+
+            tasks.push({ title: title, dueDate: dueDate, score: null });
+            saveAndRefresh();
+            document.getElementById('taskTitle').value = '';
+            document.getElementById('taskDueDate').value = '';
+        }
+
+        function deleteTask(index) {
+            if (confirm(`「${tasks[index].title}」を削除しますか？`)) {
+                tasks.splice(index, 1);
+                saveAndRefresh();
+            }
+        }
+
+        function updateScore(index, score) {
+            tasks[index].score = score !== '' ? parseInt(score, 10) : null;
+            saveAndRefresh();
+        }
+
+        function saveAndRefresh() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            displayTasks();
+        }
+
+        // 初期実行
+        displayTimetable();
+        displayTasks();
+    </script>
+</body>
+</html>
