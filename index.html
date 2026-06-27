@@ -212,7 +212,7 @@
             document.getElementById('taskDueDate').value = '';
         }
 
-        // 【追加機能】課題の削除
+        // 課題の削除
         function deleteTask(index) {
             if (confirm(`「${tasks[index].title}」を削除しますか？`)) {
                 tasks.splice(index, 1); // 指定した位置の課題を1件削除
